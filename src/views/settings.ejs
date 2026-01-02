@@ -413,18 +413,21 @@
                 return;
               }
               
-              // 验证 OpenAI Key 是否可用
+              // Use backend validation which respects OPENAI_BASE_URL
               try {
-                const testResp = await fetch('https://api.openai.com/v1/models', {
-                  headers: { 'Authorization': `Bearer ${trimmedKey}` }
-                });
-                if (!testResp.ok) {
-                  ElementPlus.ElMessage.error('OpenAI Key 无效，请检查后重试');
+                const keyToTest = encodeURIComponent(trimmedKey);
+                const diagResp = await fetch(`/api/diagnose/openai?key=${keyToTest}`);
+                const diagData = await diagResp.json();
+                
+                if (!diagResp.ok || !diagData.ok) {
+                  ElementPlus.ElMessage.error('API Key 无效或连接失败: ' + (diagData.message || 'Unknown error'));
                   savingSvc.value = false;
                   return;
                 }
+                
+                console.log('API validated successfully. Base URL:', diagData.baseURL);
               } catch (e) {
-                ElementPlus.ElMessage.error('无法验证 OpenAI Key，请检查网络连接');
+                ElementPlus.ElMessage.error('无法验证 API Key: ' + e.message);
                 savingSvc.value = false;
                 return;
               }

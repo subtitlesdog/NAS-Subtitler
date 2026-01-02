@@ -542,7 +542,21 @@ app.get('/settings', (req, res) => {
 // 新增：OpenAI 诊断接口（检查 Key、连接与 whisper-1 是否可用）
 app.get('/api/diagnose/openai', async (req, res) => {
   try {
-    const client = await getSnClient();
+    const testKey = req.query.key;
+    let client;
+    const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    
+    if (testKey) {
+      const OpenAI = require('openai');
+      client = new OpenAI({ 
+        apiKey: testKey.trim() || 'sk-dummy-key',
+        baseURL 
+      });
+    } else {
+      client = await getSnClient();
+    }
+    
+    //const client = await getSnClient();
     // 列出可用模型以验证连接与授权
     const models = await client.models.list();
     const list = Array.isArray(models.data) ? models.data : [];
